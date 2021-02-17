@@ -1,6 +1,7 @@
 const fs = require("fs");
 
-function read_coff(filename) {
+function read_coff(filename)
+{
     file = fs.readFileSync(filename, null);
 
     // COFF file header
@@ -60,6 +61,7 @@ function read_coff(filename) {
 
         section.s_data = file.slice(s_scnptr, s_scnptr + s_size);
 
+        // relocation entries
         section.s_relocs = [];
         for (var j = 0; j < s_nreloc; j++)
         {
@@ -69,6 +71,18 @@ function read_coff(filename) {
                 r_type: file.readUint16LE(s_relptr + j * 10 + 8)
             }
             section.s_relocs.push(reloc);
+        }
+
+        // line number entries
+        section.s_lnnos = [];
+        for (var j = 0; j < s_nlnno; j++)
+        {
+            var lnno = {
+                l_symndx: file.readInt32LE(s_lnnoptr + j * 6),
+                l_paddr: file.readInt32LE(s_lnnoptr + j * 6),
+                l_lnno: file.readInt32LE(s_lnnoptr + j * 6 + 2)
+            }
+            section.s_lnnos.push(lnno);
         }
 
         sections.push(section);
