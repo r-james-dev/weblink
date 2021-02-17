@@ -21,7 +21,7 @@ function read_coff(filename) {
     {
         // optional header
         optional_header = {
-            magic: file.readUint15LE(20),
+            magic: file.readUint16LE(20),
             vstamp: file.readUint16LE(22),
             tsize: file.readUint32LE(24),
             dsize: file.readUint32LE(28),
@@ -59,6 +59,17 @@ function read_coff(filename) {
         section.s_name = section.s_name.toString();
 
         section.s_data = file.slice(s_scnptr, s_scnptr + s_size);
+
+        section.s_relocs = [];
+        for (var j = 0; j < s_nreloc; j++)
+        {
+            reloc = {
+                r_vaddr: file.readInt32LE(s_relptr + j * 10),
+                r_symndx: file.readInt32LE(s_relptr + j * 10 + 4),
+                r_type: file.readUint16LE(s_relptr + j * 10 + 8)
+            }
+            section.s_relocs.push(reloc);
+        }
 
         sections.push(section);
         offset += 40;
