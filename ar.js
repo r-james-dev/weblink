@@ -1,8 +1,8 @@
 const fs = require("fs");
 
-function read_ar(filename)
+function readAr(filename)
 {
-    archive = fs.readFileSync(filename, null);
+    var archive = fs.readFileSync(filename, null);
 
     if (archive.slice(0, 8).toString() !== "!<arch>\n")
     {
@@ -10,11 +10,11 @@ function read_ar(filename)
     }
 
     var offset = 8;
-    files = [];
+    var files = [];
     while (offset < archive.length)
     {
         // file metadata
-        file = {
+        var file = {
             id: archive.slice(offset, offset + 16).toString().trimRight(),
             mod_time: parseInt(archive.slice(offset + 16, offset + 28).toString(), 10),
             owner: parseInt(archive.slice(offset + 28, offset + 34).toString(), 10),
@@ -28,14 +28,14 @@ function read_ar(filename)
             file.id = file.id.slice(0, file.id.length - 1);
         }
 
-        size = parseInt(archive.slice(offset + 48, offset + 58).toString(), 10)
+        var size = parseInt(archive.slice(offset + 48, offset + 58).toString(), 10);
 
         file.data = archive.slice(offset + 60, offset + 60 + size);
 
         var ending = archive.readUint16BE(offset + 58);
         if (ending !== 0x600A)
         {
-            throw "Incorrect header ending"
+            throw "Incorrect header ending";
         }
 
         offset += 60 + size;
