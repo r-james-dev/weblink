@@ -46,6 +46,12 @@ function read_ar(filename)
             offset += 1;
         }
 
-        files.push(file);
+        // drop symbol tables
+        if (!(file.id === "" || file.id === "/"))
+        {
+            files.push(file);
+        }
     }
+
+    return files;
 }
