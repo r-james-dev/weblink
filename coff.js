@@ -55,7 +55,7 @@ function read_coff(filename)
         // remove trailing null bytes from name
         while (section.s_name[section.s_name.length - 1] === 0)
         {
-            section.s_name = section.s_name.slice(0, section.s_name.length - 2);
+            section.s_name = section.s_name.slice(0, section.s_name.length - 1);
         }
         section.s_name = section.s_name.toString();
 
@@ -87,5 +87,52 @@ function read_coff(filename)
 
         sections.push(section);
         offset += 40;
+    }
+
+    // string table
+    str_table_size = file.readUint32LE(f_symptr + f_nsyms * 18);
+    str_table = file.slice(
+        f_symptr + f_nsyms * 18,
+        f_symptr + f_nsyms * 18 + str_table_size
+    );
+
+    // symbol table
+    sym_table = [];
+    for (var i = 0; i < f_nsyms; i++)
+    {
+        symbol = {
+            n_value: file.readInt32LE(f_symptr + i * 18 + 8),
+            n_scnum: file.readInt16LE(f_symptr + i * 18 + 12),
+            n_type: file.readUint16LE(f_symptr + i * 18 + 14),
+            n_sclass: file.slice(f_symptr + i * 18 + 16, f_symptr + i * 18 + 17).toString(),
+            n_numaux: file.slice(f_symptr + i * 18 + 17, f_symptr + i * 18 + 18).toString(),
+        }
+
+        n_zeroes = file.readUint32LE(f_symptr + i * 18);
+        if (n_zeroes === 0)
+        {
+            // read name from string table
+            offset = file.readUint32LE(f_symptr + i * 18 + 4);
+            for (var j = offset; j < str_table_size; j++)
+            {
+                if (str_table[j] === 0)
+                {
+                    symbol.n_name = str_table.slice(offset, j).toString();
+                    break;
+                }
+            }
+        } else {
+            symbol.n_name = file.slice(f_symptr + i * 18, f_symptr + i * 18 + 8);
+
+            // remove trailing null bytes
+            while (symbol.n_name[symbol.n_name.length - 1] === 0)
+            {
+                symbol.n_name = symbol.n_name.slice(0, symbol.n_name.length - 1);
+            }
+            symbol.n_name = symbol.n_name.toString();
+        }
+
+
+        sym_table.push(symbol)
     }
 }
